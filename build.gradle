@@ -7,12 +7,16 @@ buildscript {
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:1.4.2.RELEASE")
     }
+
 }
 
 apply plugin: 'java'
+apply plugin: 'application'
 apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'spring-boot'
+
+mainClassName = "com.jcs.todomvc.Application"
 
 jar {
     baseName = 'todo-backend'
@@ -41,5 +45,3 @@ task wrapper(type: Wrapper) {
 }
 
 task stage(dependsOn: ['build'])
-
-mainClassName = "com.jcs.todomvc.Application"
