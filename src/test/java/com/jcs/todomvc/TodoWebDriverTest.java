@@ -40,7 +40,7 @@ import static org.springframework.http.HttpStatus.OK;
         webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public class TodoWebDriverTest {
 
-  public class NoopWireMethods implements TodosController.WireMethods {
+  public static class NoopWireMethods implements TodosController.WireMethods {
 
     public HttpEntity<Collection<ResourceWithUrl>> listAll() {
       throw new UnsupportedOperationException("not expected");
@@ -72,8 +72,8 @@ public class TodoWebDriverTest {
   private static FluentWebDriver FWD;
   private static int testNum;
 
-  private Todo todo;
-  private long id;
+  private static Todo todo;
+  private static long id;
 
   @BeforeClass
   public static void sharedForAllTests() {
@@ -103,39 +103,14 @@ public class TodoWebDriverTest {
   @Test
   public void initialListShouldBeASingleSetupEntry() throws InterruptedException {
 
-    TodosController.WIRE_METHODS = new NoopWireMethods() {
-
-      @Override
-      public HttpEntity<Collection<ResourceWithUrl>> listAll() {
-        return new ResponseEntity<>(new HashSet<Todo>() {{
-          add(new Todo(1, "Win Lottery", false, 1));
-          add(new Todo(2, "Climb Everest", false, 2));
-        }}.stream().map(todo -> toResource(todo)).collect(Collectors.toList()), OK);
-
-      }
-    };
+    initialListShouldBeASingleSetupEntry_mockSetup();
     openTodoPage();
     listInPageShouldBe("Win Lottery|Climb Everest");
   }
 
   @Test
   public void addItemToList() throws InterruptedException {
-    TodosController.WIRE_METHODS = new NoopWireMethods() {
-      @Override
-      public HttpEntity<Collection<ResourceWithUrl>> listAll() {
-        return new ResponseEntity<>(new HashSet<Todo>() {{
-          add(new Todo(1, "One", false, 1));
-          add(new Todo(2, "Two", false, 2));
-        }}.stream().map(todo -> toResource(todo)).collect(Collectors.toList()), OK);
-      }
-
-      @Override
-      public HttpEntity<ResourceWithUrl> saveTodo(@RequestBody Todo t) {
-        todo = t;
-        return respondWithResource(todo, CREATED);
-      }
-
-    };
+    addItemToList_mockSetup();
 
     openTodoPage();
     FWD.input(id("new-todo")).sendKeys("Buy eggs - check they're not cracked" + Keys.RETURN);
@@ -159,22 +134,7 @@ public class TodoWebDriverTest {
   @Test
   public void deleteAnItem() throws InterruptedException {
 
-    TodosController.WIRE_METHODS = new NoopWireMethods() {
-      @Override
-      public HttpEntity<Collection<ResourceWithUrl>> listAll() {
-
-        return new ResponseEntity<>(new HashSet<Todo>() {{
-          add(new Todo(1, "Sleep", false, 1));
-        }}.stream().map(todo -> toResource(todo)).collect(Collectors.toList()), OK);
-
-      }
-
-      @Override
-      public void deleteOneTodo(@PathVariable("todo-id") long i) {
-        id = i;
-      }
-
-    };
+    deleteAnItem_mockSetup();
 
     openTodoPage();
 
@@ -194,5 +154,61 @@ public class TodoWebDriverTest {
   private static void clickOnRowToActivateDeleteButton(FluentWebElement row) {
     new Actions(DRIVER).moveToElement(row.getWebElement()).click().perform();
   }
+
+  // Mocks - static setup methods
+
+  public static void initialListShouldBeASingleSetupEntry_mockSetup() {
+    TodosController.WIRE_METHODS = new NoopWireMethods() {
+
+      @Override
+      public HttpEntity<Collection<ResourceWithUrl>> listAll() {
+        return new ResponseEntity<>(new HashSet<Todo>() {{
+          add(new Todo(1, "Win Lottery", false, 1));
+          add(new Todo(2, "Climb Everest", false, 2));
+        }}.stream().map(todo -> toResource(todo)).collect(Collectors.toList()), OK);
+
+      }
+    };
+  }
+
+  public static void addItemToList_mockSetup() {
+    TodosController.WIRE_METHODS = new NoopWireMethods() {
+      @Override
+      public HttpEntity<Collection<ResourceWithUrl>> listAll() {
+        return new ResponseEntity<>(new HashSet<Todo>() {{
+          add(new Todo(1, "One", false, 1));
+          add(new Todo(2, "Two", false, 2));
+        }}.stream().map(todo -> toResource(todo)).collect(Collectors.toList()), OK);
+      }
+
+      @Override
+      public HttpEntity<ResourceWithUrl> saveTodo(@RequestBody Todo t) {
+        todo = t;
+        return respondWithResource(todo, CREATED);
+      }
+
+    };
+  }
+
+
+  public static void deleteAnItem_mockSetup() {
+    TodosController.WIRE_METHODS = new NoopWireMethods() {
+      @Override
+      public HttpEntity<Collection<ResourceWithUrl>> listAll() {
+
+        return new ResponseEntity<>(new HashSet<Todo>() {{
+          add(new Todo(1, "Sleep", false, 1));
+        }}.stream().map(todo -> toResource(todo)).collect(Collectors.toList()), OK);
+
+      }
+
+      @Override
+      public void deleteOneTodo(@PathVariable("todo-id") long i) {
+        id = i;
+      }
+
+    };
+  }
+
 
 }
